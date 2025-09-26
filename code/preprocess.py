@@ -184,7 +184,17 @@ class Datasets():
             cutout_size = random.randint(hp.img_size // 8, hp.img_size // 4)
             x = random.randint(0, hp.img_size - cutout_size)
             y = random.randint(0, hp.img_size - cutout_size)
-            img[y:y+cutout_size, x:x+cutout_size, :] = 0.0
+            # Create a mask of ones
+            mask = tf.ones((hp.img_size, hp.img_size, 1), dtype=img.dtype)
+
+            # Set the cutout region to zero
+            mask = tf.tensor_scatter_nd_update(
+                mask,
+                indices=[[i, j, 0] for i in range(y, y+cutout_size) for j in range(x, x+cutout_size)],
+                updates=tf.zeros(cutout_size*cutout_size, dtype=img.dtype)
+            )
+
+            img = img * mask
 
         # Apply random brightness or contrast adjustment
         if random.random() < 0.3:
@@ -195,7 +205,7 @@ class Datasets():
         if random.random() < 0.2:
             img = tf.keras.preprocessing.image.random_shift(img, 0.1, 0.1)
             img = tf.keras.preprocessing.image.random_rotation(img, 10)
-            
+
         return img
 
     def get_data(self, path, is_vgg, shuffle, augment):

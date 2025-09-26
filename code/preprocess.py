@@ -172,12 +172,30 @@ class Datasets():
         # that ImageDataGenerator uses *this* function for preprocessing
         # on augmented data.
 
+        # Apply random additive noise to some images
         if random.random() < 0.3:
             img = img + tf.random.uniform(
                 (hp.img_size, hp.img_size, 1),
                 minval=-0.1,
                 maxval=0.1)
 
+        # Apply random local cutout to some images
+        if random.random() < 0.3:
+            cutout_size = random.randint(hp.img_size // 8, hp.img_size // 4)
+            x = random.randint(0, hp.img_size - cutout_size)
+            y = random.randint(0, hp.img_size - cutout_size)
+            img[y:y+cutout_size, x:x+cutout_size, :] = 0.0
+
+        # Apply random brightness or contrast adjustment
+        if random.random() < 0.3:
+            factor = random.uniform(0.7, 1.3)
+            img = tf.clip_by_value(img * factor, 0.0, 1.0)
+
+        # Apply small random affine transformation
+        if random.random() < 0.2:
+            img = tf.keras.preprocessing.image.random_shift(img, 0.1, 0.1)
+            img = tf.keras.preprocessing.image.random_rotation(img, 10)
+            
         return img
 
     def get_data(self, path, is_vgg, shuffle, augment):
@@ -210,7 +228,7 @@ class Datasets():
             # ============================================================
 
             data_gen = tf.keras.preprocessing.image.ImageDataGenerator(
-                preprocessing_function=self.preprocess_fn,  # use custom for augmentation
+                preprocessing_function=self.custom_preprocess_fn,  # use custom for augmentation
                 rotation_range=15,          # slight rotations
                 width_shift_range=0.1,      # horizontal shifts
                 height_shift_range=0.1,     # vertical shifts

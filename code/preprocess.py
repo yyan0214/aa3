@@ -210,8 +210,14 @@ class Datasets():
             # ============================================================
 
             data_gen = tf.keras.preprocessing.image.ImageDataGenerator(
-                preprocessing_function=self.preprocess_fn)
-
+                preprocessing_function=self.custom_preprocess_fn,  # use custom for augmentation
+                rotation_range=15,          # slight rotations
+                width_shift_range=0.1,      # horizontal shifts
+                height_shift_range=0.1,     # vertical shifts
+                zoom_range=0.1,             # slight zoom
+                brightness_range=[0.8, 1.2],# brightness variation
+                horizontal_flip=True        # flip for augmentation
+            )
             # ============================================================
         else:
             # Don't modify this
